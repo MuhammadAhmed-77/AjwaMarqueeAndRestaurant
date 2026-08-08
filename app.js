@@ -1,5 +1,4 @@
 import { restaurantConfig } from './config.js';
-
 import { menuItems } from './menu.js';
 
 let cart = JSON.parse(localStorage.getItem('ajwa-cart') || '[]');
@@ -11,6 +10,30 @@ const money = (n) => `Rs. ${Number(n).toLocaleString('en-PK')}`;
 function variantsFor(item) {
   if (item.variants) return Object.entries(item.variants);
   return [['Standard', item.price]];
+}
+
+// The restaurant menu currently contains names/prices but no individual food photos.
+// Use a stable, food-focused photo for every card until real restaurant photos are supplied.
+function foodImageUrl(item) {
+  const categoryHints = {
+    'Appetizer': 'appetizer', 'Soup': 'soup', 'Dry & Fry': 'pakistani food',
+    'Chinese Gravy': 'chinese food', 'Chowmein': 'chow mein', 'Chop Suey': 'chop suey',
+    'Chinese Rice': 'fried rice', 'Beef Steak': 'beef steak', 'Chicken Steak': 'chicken steak',
+    'Pasta': 'pasta', 'Pizza': 'pizza', 'Fast Food': 'burger', 'Salad Bar': 'salad',
+    'Shinwari': 'mutton karahi', "Chef’s Special": 'pakistani curry', 'Ajwa Bar B. Q.': 'barbecue',
+    'Bar B.Q. Platter': 'barbecue platter', 'Fish Bar B. Que': 'fish barbecue',
+    'Tikka Bar B. Que': 'chicken tikka', 'Kabab Bar B. Que': 'kebab', "Pakistani Handi's": 'handi curry',
+    'Pakistani Karahi': 'karahi', 'Tandoor': 'naan', 'Dessert': 'dessert', 'Hot Beverage': 'coffee tea',
+    'Cold Beverage': 'cold drink', 'Shakes': 'milkshake', 'Special': 'mocktail'
+  };
+  const hint = categoryHints[item.category] || 'restaurant food';
+  const name = item.name
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\d+/g, '')
+    .replace(/[^a-zA-Z ]/g, ' ')
+    .trim();
+  const tags = encodeURIComponent(`${name} ${hint}`.trim().replace(/\s+/g, ','));
+  return `https://loremflickr.com/640/480/${tags}?lock=${item.id}`;
 }
 
 function getCategories() {
@@ -34,6 +57,9 @@ function renderMenu() {
     const select = vs.length > 1 ? `<select class="variant-select" data-id="${item.id}">${vs.map(([n,p])=>`<option value="${n}">${n} — ${money(p)}</option>`).join('')}</select>` : '';
     const p = vs[0][1];
     return `<article class="food-card">
+      <div class="food-image-wrap">
+        <img class="food-image" src="${foodImageUrl(item)}" alt="${item.name}" loading="lazy" referrerpolicy="no-referrer">
+      </div>
       <div class="cat">${item.category}</div><h3>${item.name}</h3>
       <div class="price-row"><div class="price">${vs.length>1?'From ':''}${money(p)}</div>${select}<button class="add" data-add="${item.id}">Add</button></div>
     </article>`;
@@ -85,7 +111,7 @@ function genericWhatsApp(text='') { window.open(waUrl(text || 'Assalam-o-Alaikum
 function orderMessage() {
   const name = $('#customerName').value.trim(), phone = $('#customerPhone').value.trim();
   const type = $('#orderType').value, address = $('#address').value.trim(), notes = $('#notes').value.trim();
-  const lines = cart.map((i,n)=>`${n+1}. ${i.name} (${i.variant})\n   Qty: ${i.qty} × ${money(i.price)} = ${money(i.qty*i.price)}`).join('\n');
+  const lines = cart.map((i,n)=>`${n+1}. ${i.name} (${i.variant})\n   Qty: ${i.qty} × ${money(i.price)} = ${money(i.qty*i.qty?i.price*i.qty:i.price)}`).join('\n');
   const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
   return `Assalam-o-Alaikum Ajwa Garden,\n\nI would like to place an order.\n\nCustomer Name: ${name}\nPhone: ${phone}\nOrder Type: ${type}${type==='Delivery'?'\nAddress: '+address:''}\n\nORDER DETAILS:\n\n${lines}\n\nSubtotal: ${money(total)}\n${notes?'\nNotes: '+notes+'\n':''}\nPlease confirm availability and final charges.\nThank you.`;
 }
