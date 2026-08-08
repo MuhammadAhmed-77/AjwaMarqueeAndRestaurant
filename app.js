@@ -111,7 +111,7 @@ function genericWhatsApp(text='') { window.open(waUrl(text || 'Assalam-o-Alaikum
 function orderMessage() {
   const name = $('#customerName').value.trim(), phone = $('#customerPhone').value.trim();
   const type = $('#orderType').value, address = $('#address').value.trim(), notes = $('#notes').value.trim();
-  const lines = cart.map((i,n)=>`${n+1}. ${i.name} (${i.variant})\n   Qty: ${i.qty} × ${money(i.price)} = ${money(i.qty*i.qty?i.price*i.qty:i.price)}`).join('\n');
+  const lines = cart.map((i,n)=>`${n+1}. ${i.name} (${i.variant})\n   Qty: ${i.qty} × ${money(i.price)} = ${money(i.price*i.qty)}`).join('\n');
   const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
   return `Assalam-o-Alaikum Ajwa Garden,\n\nI would like to place an order.\n\nCustomer Name: ${name}\nPhone: ${phone}\nOrder Type: ${type}${type==='Delivery'?'\nAddress: '+address:''}\n\nORDER DETAILS:\n\n${lines}\n\nSubtotal: ${money(total)}\n${notes?'\nNotes: '+notes+'\n':''}\nPlease confirm availability and final charges.\nThank you.`;
 }
